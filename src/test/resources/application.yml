@@ -9,6 +9,10 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+  messages:
+    basename: messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
   cache:
     type: simple
   autoconfigure:
