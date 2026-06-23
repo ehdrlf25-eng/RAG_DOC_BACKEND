@@ -9,6 +9,12 @@ spring:
       ddl-auto: create-drop
   flyway:
     enabled: false
+  cache:
+    type: simple
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
 app:
   jwt:
@@ -16,3 +22,5 @@ app:
     expiration-ms: 3600000
   cors:
     allowed-origins: http://localhost:5173
+  cache:
+    user-ttl: 5m
