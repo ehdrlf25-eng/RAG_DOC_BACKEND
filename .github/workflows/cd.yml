@@ -79,7 +79,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy backend
-        shell: powershell
+        shell: powershell -ExecutionPolicy Bypass -File {0}
         env:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
