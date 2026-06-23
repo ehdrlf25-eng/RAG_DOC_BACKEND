@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ehdrlf25-eng/rag_doc_backend
 
 permissions:
   contents: read
@@ -84,6 +84,14 @@ jobs:
           DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
           BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         run: |
+          $ErrorActionPreference = 'Stop'
+          function Invoke-DockerCompose {
+            param([string[]]$Args)
+            & docker compose @Args
+            if ($LASTEXITCODE -ne 0) {
+              throw "docker compose failed ($($Args -join ' ')) with exit code $LASTEXITCODE"
+            }
+          }
           $deployDir = if ($env:DEPLOY_PATH) { $env:DEPLOY_PATH } else { Join-Path $env:GITHUB_WORKSPACE 'deploy' }
           if (-not (Test-Path $deployDir)) {
             throw "Deploy directory not found: $deployDir"
@@ -93,7 +101,7 @@ jobs:
             Copy-Item '.env.example' '.env'
             Write-Warning '.env created from .env.example — update DB/JWT values before use.'
           }
-          docker compose -f docker-compose.redis.yml -f docker-compose.kafka.yml up -d
-          docker compose -f docker-compose.yml pull backend
-          docker compose -f docker-compose.yml up -d backend
+          Invoke-DockerCompose -Args @('-f', 'docker-compose.redis.yml', '-f', 'docker-compose.kafka.yml', 'up', '-d')
+          Invoke-DockerCompose -Args @('-f', 'docker-compose.yml', 'pull', 'backend')
+          Invoke-DockerCompose -Args @('-f', 'docker-compose.yml', 'up', '-d', 'backend')
           docker image prune -f
