@@ -19,6 +19,20 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost}
   cache:
     user-ttl: ${USER_CACHE_TTL:30m}
+  rag:
+    storage:
+      path: ${RAG_STORAGE_PATH:/app/storage/documents}
+    embedding:
+      provider: ${RAG_EMBEDDING_PROVIDER:ollama}
+      dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://host.docker.internal:11434}
+        model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    llm:
+      provider: ${RAG_LLM_PROVIDER:ollama}
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://host.docker.internal:11434}
+        model: ${OLLAMA_CHAT_MODEL:llama3.2}
 
 management:
   endpoints:

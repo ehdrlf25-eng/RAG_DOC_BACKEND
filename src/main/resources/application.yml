@@ -3,6 +3,10 @@ spring:
     name: rag-doc-platform
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:local}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:ragdoc}
     username: ${DB_USERNAME:postgres}
@@ -38,10 +42,48 @@ app:
     allowed-origins: http://localhost:5173
   cache:
     user-ttl: 30m
+  rag:
+    storage:
+      path: ${RAG_STORAGE_PATH:./storage/documents}
+    retrieval:
+      top-k: 5
+      max-history-messages: 10
+      min-similarity: 0.8
+      hybrid-candidate-limit: 40
+      hybrid-dense-min-similarity: 0.3
+      rrf-k: 60
+      rerank-candidate-limit: 20
+      parent-expansion-limit: 5
+      reranker-provider: llm
+    chunking:
+      child-max-tokens: 256
+    embedding:
+      provider: ${RAG_EMBEDDING_PROVIDER:ollama}
+      dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+        model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+        model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
+    llm:
+      provider: ${RAG_LLM_PROVIDER:ollama}
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+        model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
+      ollama:
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+        model: ${OLLAMA_CHAT_MODEL:llama3.2}
 
 logging:
   level:
     org.springframework.security: INFO
+    com.ragdoc.platform.document: INFO
+    com.ragdoc.platform.conversation: INFO
+    com.ragdoc.platform.conversation.ConversationService: DEBUG
+    com.ragdoc.platform.rag: INFO
 
 springdoc:
   swagger-ui:

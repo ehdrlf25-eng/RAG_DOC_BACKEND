@@ -24,3 +24,37 @@ app:
     allowed-origins: http://localhost:5173
   cache:
     user-ttl: 5m
+  rag:
+    storage:
+      path: ./build/test-storage
+    retrieval:
+      top-k: 3
+      max-history-messages: 5
+      min-similarity: 0.8
+      hybrid-candidate-limit: 20
+      hybrid-dense-min-similarity: 0.0
+      rrf-k: 60
+      rerank-candidate-limit: 10
+      parent-expansion-limit: 3
+      reranker-provider: passthrough
+    chunking:
+      child-max-tokens: 256
+    embedding:
+      provider: mock
+      dimensions: 8
+      openai:
+        api-key: test
+        base-url: https://api.openai.com/v1
+        model: text-embedding-3-small
+      ollama:
+        base-url: http://localhost:11434
+        model: nomic-embed-text
+    llm:
+      provider: mock
+      openai:
+        api-key: test
+        base-url: https://api.openai.com/v1
+        model: gpt-4o-mini
+      ollama:
+        base-url: http://localhost:11434
+        model: llama3.2

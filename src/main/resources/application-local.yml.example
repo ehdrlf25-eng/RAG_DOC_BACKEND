@@ -1,3 +1,23 @@
 spring:
   datasource:
     password: your-postgres-password
+
+# RAG defaults to Ollama (see application.yml).
+# Ensure models are pulled locally:
+#   ollama pull nomic-embed-text
+#   ollama pull llama3.2
+#
+# Optional overrides:
+# app:
+#   rag:
+#     embedding:
+#       provider: ollama
+#       dimensions: 768
+#       ollama:
+#         base-url: http://localhost:11434
+#         model: nomic-embed-text
+#     llm:
+#       provider: ollama
+#       ollama:
+#         base-url: http://localhost:11434
+#         model: llama3.2

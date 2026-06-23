@@ -60,26 +60,37 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build-and-push
-    if: github.ref == 'refs/heads/main' && secrets.SSH_HOST != ''
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT || 22 }}
-          script: |
-            set -e
-            cd ${{ secrets.DEPLOY_PATH || '/opt/rag-doc-platform' }}
-            docker login ghcr.io -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }}
-            export BACKEND_IMAGE=ghcr.io/${{ github.repository }}:latest
-            docker compose pull backend
-            docker compose up -d backend
-            docker image prune -f
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy backend
+        shell: pwsh
+        env:
+          DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        run: |
+          $deployDir = if ($env:DEPLOY_PATH) { $env:DEPLOY_PATH } else { Join-Path $env:GITHUB_WORKSPACE 'deploy' }
+          if (-not (Test-Path $deployDir)) {
+            throw "Deploy directory not found: $deployDir"
+          }
+          Set-Location $deployDir
+          if (-not (Test-Path '.env') -and (Test-Path '.env.example')) {
+            Copy-Item '.env.example' '.env'
+            Write-Warning '.env created from .env.example — update DB/JWT values before use.'
+          }
+          docker compose -f docker-compose.redis.yml -f docker-compose.kafka.yml up -d
+          docker compose -f docker-compose.yml pull backend
+          docker compose -f docker-compose.yml up -d backend
+          docker image prune -f

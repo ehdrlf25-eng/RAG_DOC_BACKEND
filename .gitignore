@@ -5,6 +5,9 @@ build/
 # Local secrets
 src/main/resources/application-local.yml
 
+# Uploaded documents (runtime)
+storage/
+
 # IDE
 .idea/
 *.iml
