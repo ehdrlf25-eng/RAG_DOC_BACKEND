@@ -9,6 +9,10 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * Parent-Child RAG의 상위(부모) 섹션.
+ * 제목과 전체 본문을 보관하며, 자식 청크 검색 후 context 확장에 사용된다.
+ */
 @Entity
 @Table(name = "parent_sections")
 public class ParentSection {

@@ -10,6 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Ollama 로컬 서버 기반 임베딩 Provider.
+ * <p>
+ * {@code app.rag.embedding.provider=ollama} 설정 시 활성화된다.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.rag.embedding", name = "provider", havingValue = "ollama")
 public class OllamaEmbeddingProvider implements EmbeddingProvider {

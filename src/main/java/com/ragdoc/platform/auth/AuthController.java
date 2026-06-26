@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * 인증 API.
+ * {@code /signup}, {@code /login}은 공개 경로이며, {@code /me}는 JWT 인증이 필요하다.
+ */
 @Tag(name = "Auth", description = "인증 API")
 @RestController
 @RequestMapping("/api/auth")

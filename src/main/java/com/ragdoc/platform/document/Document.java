@@ -12,6 +12,10 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * 업로드된 PDF 문서 메타데이터.
+ * 실제 파일은 {@code storagePath}에, 검색용 청크는 별도 테이블에 저장된다.
+ */
 @Entity
 @Table(name = "documents")
 public class Document {
@@ -20,6 +24,7 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 문서 소유자. RAG 검색·조회 시 반드시 이 값으로 필터링한다. */
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
@@ -29,6 +34,7 @@ public class Document {
     @Column(name = "storage_path", nullable = false, length = 1000)
     private String storagePath;
 
+    /** 수집 진행 상태. PROCESSING → READY 또는 FAILED. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private DocumentStatus status;

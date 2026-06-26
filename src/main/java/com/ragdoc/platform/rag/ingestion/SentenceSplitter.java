@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * 문장·문단 분리 유틸리티.
+ * <p>
+ * {@link SemanticChunkingService}에서 섹션 본문을 문장 단위로 분해할 때 사용한다.
+ */
 final class SentenceSplitter {
 
     private static final Pattern SENTENCE_BOUNDARY = Pattern.compile("(?<=[.!?。！？])\\s+");

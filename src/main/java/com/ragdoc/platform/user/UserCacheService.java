@@ -9,6 +9,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 사용자 정보 Redis 캐시 (Cache Aside).
+ * 캐시 이름·TTL은 {@link com.ragdoc.platform.config.CacheConfig}에서 설정한다.
+ */
 @Service
 public class UserCacheService {
 
@@ -18,6 +22,7 @@ public class UserCacheService {
         this.userRepository = userRepository;
     }
 
+    /** DB 조회 결과를 UserResponse DTO로 캐시한다. 비밀번호는 DTO에 포함되지 않는다. */
     @Cacheable(cacheNames = UserCacheNames.USER, key = "#userId")
     public UserResponse getById(Long userId) {
         User user = userRepository.findById(userId)
@@ -32,6 +37,6 @@ public class UserCacheService {
 
     @CacheEvict(cacheNames = UserCacheNames.USER, key = "#userId")
     public void evict(Long userId) {
-        // CacheEvict handles invalidation.
+        // @CacheEvict가 실제 무효화를 수행한다.
     }
 }

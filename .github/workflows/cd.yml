@@ -101,7 +101,7 @@ jobs:
             Copy-Item '.env.example' '.env'
             Write-Warning '.env created from .env.example — update DB/JWT values before use.'
           }
-          Invoke-DockerCompose -Args @('-f', 'docker-compose.redis.yml', '-f', 'docker-compose.kafka.yml', 'up', '-d')
+          # Redis/Kafka are managed separately (docker-compose.redis.yml / .kafka.yml)
           Invoke-DockerCompose -Args @('-f', 'docker-compose.yml', 'pull', 'backend')
           Invoke-DockerCompose -Args @('-f', 'docker-compose.yml', 'up', '-d', 'backend')
           docker image prune -f

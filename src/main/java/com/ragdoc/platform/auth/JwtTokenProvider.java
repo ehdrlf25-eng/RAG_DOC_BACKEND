@@ -9,6 +9,10 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * JWT 생성·검증 유틸리티.
+ * sub claim에 userId, email claim에 사용자 이메일을 담는다.
+ */
 @Component
 public class JwtTokenProvider {
 
@@ -23,6 +27,7 @@ public class JwtTokenProvider {
         this.expirationMs = expirationMs;
     }
 
+    /** 로그인/회원가입 성공 시 Access Token을 발급한다. */
     public String createToken(Long userId, String email) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
@@ -41,6 +46,7 @@ public class JwtTokenProvider {
         return Long.valueOf(claims.getSubject());
     }
 
+    /** 서명·만료를 검증한다. 실패 시 예외를 삼키고 false를 반환한다. */
     public boolean validateToken(String token) {
         try {
             parseClaims(token);

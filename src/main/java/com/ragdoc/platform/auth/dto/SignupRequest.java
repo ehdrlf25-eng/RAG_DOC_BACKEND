@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+/** 회원가입 요청 DTO. */
 public record SignupRequest(
         @NotBlank(message = "{validation.email.required}")
         @Email(message = "{validation.email.invalid}")

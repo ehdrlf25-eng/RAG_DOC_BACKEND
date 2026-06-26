@@ -9,6 +9,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * 밀집(dense) 벡터 검색과 키워드(희소) 검색을 결합하는 하이브리드 검색 서비스.
+ * <p>
+ * 두 검색 결과를 {@link ReciprocalRankFusion}으로 융합하여 단일 순위 목록을 생성한다.
+ */
 @Service
 public class HybridSearchService {
 
@@ -31,6 +36,13 @@ public class HybridSearchService {
         this.ragProperties = ragProperties;
     }
 
+    /**
+     * 벡터 유사도 검색과 키워드 FTS 검색을 병렬 수행한 뒤 RRF로 융합한다.
+     *
+     * @param userId          문서 소유권 필터
+     * @param query           전처리된 텍스트 쿼리 (키워드 검색용)
+     * @param queryEmbedding  쿼리 임베딩 벡터 (밀집 검색용)
+     */
     public List<ChunkSearchResult> search(Long userId, String query, float[] queryEmbedding) {
         int candidateLimit = ragProperties.retrieval().hybridCandidateLimit();
         double denseMinSimilarity = ragProperties.retrieval().hybridDenseMinSimilarity();

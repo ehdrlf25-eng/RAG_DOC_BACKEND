@@ -69,6 +69,7 @@ public class SemanticChunkingService {
 
             if (!current.isEmpty()) {
                 boolean wouldExceedSoftLimit = currentTokens + sentenceTokens > maxTokens;
+                // 문단 시작 + 토큰 임계치 도달 시 maxTokens 이전에도 청크를 분리하여 의미 단위 보존
                 boolean preferParagraphBreak = sentence.paragraphStart()
                         && currentTokens >= paragraphBreakThreshold;
 
@@ -111,6 +112,10 @@ public class SemanticChunkingService {
         return sentences;
     }
 
+    /**
+     * 문자 수 기반 토큰 추정 (1토큰 ≈ 4자).
+     * 실제 LLM 토크나이저 없이 ingestion 단계에서 청크 크기를 제어한다.
+     */
     static int estimateTokens(String text) {
         if (text == null || text.isBlank()) {
             return 0;

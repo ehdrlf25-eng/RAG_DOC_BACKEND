@@ -82,7 +82,7 @@ public class SectionChunkingService {
                 flushDraft(drafts, currentTitle, currentBody);
                 currentTitle = line.text();
                 currentBody = new StringBuilder();
-                continue;
+                continue; // 새 섹션 시작: 이전 draft를 flush하고 제목 갱신
             }
 
             if (line.isBlank()) {
@@ -134,6 +134,9 @@ public class SectionChunkingService {
         }
     }
 
+    /**
+     * 본문 없이 제목만 있는 orphan 섹션을 인접 섹션에 병합하거나 단독 rescue한다.
+     */
     private List<SectionDraft> enforceSectionChunkConsistency(List<SectionDraft> drafts) {
         List<SectionDraft> resolved = new ArrayList<>();
 
@@ -146,6 +149,7 @@ public class SectionChunkingService {
 
             int nextIndex = findNextNonOrphanIndex(drafts, i + 1);
             if (nextIndex >= 0) {
+                // orphan 제목을 다음 비-orphan 섹션 본문 앞에 병합
                 SectionDraft next = drafts.get(nextIndex);
                 String mergedBody = mergeOrphanIntoBody(current, next.body(), true);
                 drafts.set(nextIndex, new SectionDraft(next.title(), mergedBody, next.sectionIndex(), false));
@@ -153,6 +157,7 @@ public class SectionChunkingService {
             }
 
             if (!resolved.isEmpty()) {
+                // 뒤에 병합 대상이 없으면 이전 섹션 본문 뒤에 orphan 제목을 병합
                 SectionDraft previous = resolved.getLast();
                 String mergedBody = mergeOrphanIntoBody(current, previous.body(), false);
                 resolved.set(
@@ -238,6 +243,9 @@ public class SectionChunkingService {
         }
     }
 
+    /**
+     * 본문 폰트 크기를 추정한다. 긴 텍스트 라인의 폰트 크기 중앙값을 사용한다.
+     */
     private float estimateBodyFontSize(List<PdfLine> lines) {
         List<Float> candidates = lines.stream()
                 .filter(line -> !line.isBlank())

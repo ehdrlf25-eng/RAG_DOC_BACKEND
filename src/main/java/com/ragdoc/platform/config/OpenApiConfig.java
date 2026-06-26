@@ -8,6 +8,10 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Swagger/OpenAPI 문서 설정.
+ * 전역 Bearer JWT 스킴을 선언해 인증 API 외 엔드포인트에 토큰 입력을 유도한다.
+ */
 @Configuration
 public class OpenApiConfig {
 

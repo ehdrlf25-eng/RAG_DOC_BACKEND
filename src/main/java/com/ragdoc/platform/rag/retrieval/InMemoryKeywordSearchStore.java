@@ -17,6 +17,11 @@ import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * 테스트 프로필용 인메모리 키워드 검색 저장소.
+ * <p>
+ * PostgreSQL FTS 없이 단순 대소문자 무시 부분 문자열 매칭으로 키워드 검색을 시뮬레이션한다.
+ */
 @Component
 @Profile("test")
 public class InMemoryKeywordSearchStore implements KeywordSearchStore {

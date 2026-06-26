@@ -22,6 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * RAG 채팅 대화 및 메시지 처리.
+ * 질문 시 사용자 소유 문서만 검색하고, LLM 답변과 출처 청크를 함께 반환한다.
+ */
 @Service
 public class ConversationService {
 
@@ -50,6 +54,7 @@ public class ConversationService {
         this.ragProperties = ragProperties;
     }
 
+    /** 현재 사용자의 대화 목록을 최근 수정순으로 반환한다. */
     @Transactional(readOnly = true)
     public List<ConversationResponse> listConversations(Long userId) {
         return conversationRepository.findByUserIdOrderByUpdatedAtDesc(userId).stream()
@@ -57,6 +62,7 @@ public class ConversationService {
                 .toList();
     }
 
+    /** 새 대화 세션 생성. 제목은 클라이언트에서 지정한다. */
     @Transactional
     public ConversationResponse createConversation(Long userId, CreateConversationRequest request) {
         Conversation conversation = new Conversation();
@@ -65,6 +71,7 @@ public class ConversationService {
         return ConversationResponse.from(conversationRepository.save(conversation));
     }
 
+    /** 대화 메시지 이력 조회. 소유권 검증 후 반환한다. */
     @Transactional(readOnly = true)
     public List<ChatMessageResponse> listMessages(Long userId, Long conversationId) {
         getOwnedConversation(userId, conversationId);
@@ -73,6 +80,10 @@ public class ConversationService {
                 .toList();
     }
 
+    /**
+     * RAG 채팅 메시지 전송.
+     * 흐름: 소유권 검증 → 사용자 메시지 저장 → 벡터 검색 → 프롬프트 조립 → LLM 호출 → 어시스턴트 메시지 저장.
+     */
     @Transactional
     public ChatReplyResponse sendMessage(Long userId, Long conversationId, SendMessageRequest request) {
         Conversation conversation = getOwnedConversation(userId, conversationId);
@@ -90,11 +101,13 @@ public class ConversationService {
         ChatMessage userMessage = saveMessage(conversationId, MessageRole.USER, question);
 
         List<ChatMessage> history = chatMessageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
+        // 현재 질문을 제외한 이전 메시지만 LLM 컨텍스트에 포함
         List<ChatMessage> historyBeforeCurrent = history.stream()
                 .filter(message -> !message.getId().equals(userMessage.getId()))
                 .toList();
         List<ChatMessage> recentHistory = trimHistory(historyBeforeCurrent);
 
+        // 검색 범위는 retrievalService 내부에서 userId로 제한됨
         List<RetrievalResult> retrievalResults = retrievalService.retrieve(userId, question);
 
         log.info(
@@ -138,6 +151,7 @@ public class ConversationService {
         String answer = llmProvider.complete(systemPrompt, userPrompt);
 
         ChatMessage assistantMessage = saveMessage(conversationId, MessageRole.ASSISTANT, answer);
+        // updatedAt 갱신을 위해 save 호출 (메시지 추가 시 @PreUpdate 트리거)
         conversation.setTitle(conversation.getTitle());
         conversationRepository.save(conversation);
 
@@ -157,6 +171,7 @@ public class ConversationService {
         );
     }
 
+    /** 대화와 하위 메시지를 함께 삭제한다. */
     @Transactional
     public void deleteConversation(Long userId, Long conversationId) {
         Conversation conversation = getOwnedConversation(userId, conversationId);
@@ -174,6 +189,7 @@ public class ConversationService {
         return chatMessageRepository.save(message);
     }
 
+    /** LLM 토큰 한도를 고려해 최근 N개 메시지만 대화 이력으로 사용한다. */
     private List<ChatMessage> trimHistory(List<ChatMessage> history) {
         int maxMessages = ragProperties.retrieval().maxHistoryMessages();
         if (history.size() <= maxMessages) {
@@ -222,6 +238,7 @@ public class ConversationService {
         return text.substring(0, maxLength) + "...(truncated)";
     }
 
+    /** 존재하지 않으면 404, 소유자가 다르면 403. */
     private Conversation getOwnedConversation(Long userId, Long conversationId) {
         Conversation conversation = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResponseStatusException(

@@ -15,6 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
+/**
+ * LLM 기반 리랭커.
+ * <p>
+ * RRF 융합 후보에 대해 LLM이 쿼리-패시지 관련도(0~10)를 채점하고, 점수순으로 재정렬한다.
+ * LLM 호출 실패 시 RRF 순서를 그대로 유지한다.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.rag.retrieval", name = "reranker-provider", havingValue = "llm", matchIfMissing = true)
 public class LlmReranker implements Reranker {
@@ -28,6 +34,10 @@ public class LlmReranker implements Reranker {
         this.llmProvider = llmProvider;
     }
 
+    /**
+     * LLM에게 각 후보의 관련도를 채점받아 재정렬한다.
+     * 파싱 실패한 후보는 기존 RRF 점수를 유지한다.
+     */
     @Override
     public List<ChunkSearchResult> rerank(String query, List<ChunkSearchResult> candidates) {
         if (candidates == null || candidates.isEmpty()) {
@@ -52,6 +62,7 @@ public class LlmReranker implements Reranker {
 
             List<ChunkSearchResult> reranked = new ArrayList<>(candidates.size());
             for (int i = 0; i < candidates.size(); i++) {
+                // LLM이 특정 후보 점수를 누락하면 기존 RRF 점수 유지
                 double score = scores.getOrDefault(i + 1, candidates.get(i).score());
                 reranked.add(candidates.get(i).withScore(score));
             }
@@ -65,6 +76,7 @@ public class LlmReranker implements Reranker {
             );
             return reranked;
         } catch (Exception ex) {
+            // LLM 장애 시 검색 파이프라인 전체를 중단하지 않고 RRF 순서로 폴백
             log.warn("LLM rerank failed, using RRF order reason={}", ex.getMessage());
             return candidates.stream()
                     .sorted(Comparator.comparingDouble(ChunkSearchResult::score).reversed())

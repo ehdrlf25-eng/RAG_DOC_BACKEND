@@ -4,6 +4,12 @@ import com.ragdoc.platform.rag.pdf.PdfLine;
 import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
+/**
+ * PDF 섹션 헤딩 감지 컴포넌트.
+ * <p>
+ * 폰트 크기, 볼드, 번호 패턴, 텍스트 길이, 고립 여부를 점수화하여
+ * 본문과 섹션 제목을 구분한다.
+ */
 @Component
 public class HeadingDetector {
 
@@ -16,6 +22,9 @@ public class HeadingDetector {
             Pattern.CASE_INSENSITIVE
     );
 
+    /**
+     * 헤딩 여부를 판별한다. 누적 점수가 {@link #HEADING_SCORE_THRESHOLD} 이상이면 헤딩으로 간주.
+     */
     public boolean isHeading(PdfLine line, PdfLine previous, PdfLine next, float bodyFontSize) {
         if (line.isBlank()) {
             return false;
@@ -23,12 +32,15 @@ public class HeadingDetector {
         return score(line, previous, next, bodyFontSize) >= HEADING_SCORE_THRESHOLD;
     }
 
+    /**
+     * 헤딩 점수를 계산한다. 폰트 크기·볼드·번호 패턴·짧은 텍스트·고립 여부를 가중 합산.
+     */
     int score(PdfLine line, PdfLine previous, PdfLine next, float bodyFontSize) {
         int score = 0;
         String text = line.text();
 
         if (line.fontSize() > bodyFontSize + FONT_SIZE_TOLERANCE) {
-            score += 2;
+            score += 2; // 본문 대비 큰 폰트
         }
         if (line.bold()) {
             score += 2;
@@ -40,7 +52,7 @@ public class HeadingDetector {
             score += 1;
         }
         if (isIsolated(previous, next)) {
-            score += 1;
+            score += 1; // 앞뒤 빈 줄로 둘러싸인 단독 라인
         }
         return score;
     }

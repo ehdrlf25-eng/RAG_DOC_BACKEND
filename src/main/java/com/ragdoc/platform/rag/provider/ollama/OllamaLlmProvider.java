@@ -8,6 +8,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+/**
+ * Ollama 로컬 서버 기반 LLM Provider.
+ * <p>
+ * {@code app.rag.llm.provider=ollama} 설정 시 활성화된다.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.rag.llm", name = "provider", havingValue = "ollama")
 public class OllamaLlmProvider implements LlmProvider {

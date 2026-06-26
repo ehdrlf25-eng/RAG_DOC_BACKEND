@@ -2,6 +2,10 @@ package com.ragdoc.platform.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+/**
+ * RAG 파이프라인 설정 ({@code app.rag.*}).
+ * 저장 경로, 검색 파라미터, 청킹, 임베딩·LLM 프로바이더를 바인딩한다.
+ */
 @ConfigurationProperties(prefix = "app.rag")
 public record RagProperties(
         Storage storage,
@@ -11,9 +15,11 @@ public record RagProperties(
         Llm llm
 ) {
 
+    /** PDF 원본 파일 로컬 저장 경로 */
     public record Storage(String path) {
     }
 
+    /** 벡터·하이브리드 검색 및 대화 이력 제한 */
     public record Retrieval(
             int topK,
             int maxHistoryMessages,
@@ -27,9 +33,11 @@ public record RagProperties(
     ) {
     }
 
+    /** Child 청크 최대 토큰 수 */
     public record Chunking(int childMaxTokens) {
     }
 
+    /** 임베딩 프로바이더 (ollama | openai) 및 차원 */
     public record Embedding(
             String provider,
             int dimensions,
@@ -38,6 +46,7 @@ public record RagProperties(
     ) {
     }
 
+    /** 채팅 LLM 프로바이더 (ollama | openai) */
     public record Llm(
             String provider,
             OpenAi openai,

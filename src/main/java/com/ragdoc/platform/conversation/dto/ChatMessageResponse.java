@@ -4,6 +4,7 @@ import com.ragdoc.platform.conversation.ChatMessage;
 import com.ragdoc.platform.conversation.MessageRole;
 import java.time.Instant;
 
+/** 채팅 메시지 API 응답 DTO. */
 public record ChatMessageResponse(
         Long id,
         MessageRole role,

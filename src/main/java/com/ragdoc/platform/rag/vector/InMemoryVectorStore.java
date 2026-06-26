@@ -15,6 +15,11 @@ import java.util.Map;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * 테스트 프로필용 인메모리 벡터 저장소.
+ * <p>
+ * HashMap에 임베딩을 보관하고 Java 코사인 유사도로 밀집 검색을 시뮬레이션한다.
+ */
 @Component
 @Profile("test")
 public class InMemoryVectorStore implements VectorStore {
@@ -75,7 +80,7 @@ public class InMemoryVectorStore implements VectorStore {
 
                 double score = cosineSimilarity(queryEmbedding, embedding);
                 if (score < minSimilarity) {
-                    continue;
+                    continue; // pgvector minSimilarity 필터와 동일한 동작
                 }
 
                 results.add(new ChunkSearchResult(

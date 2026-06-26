@@ -1,5 +1,10 @@
 package com.ragdoc.platform.rag.vector;
 
+/**
+ * 벡터·키워드 검색 공통 결과 DTO.
+ * <p>
+ * Child chunk 내용과 Parent section 메타데이터를 함께 담아 하이브리드 검색·리랭킹에 전달한다.
+ */
 public record ChunkSearchResult(
         Long chunkId,
         Long parentSectionId,

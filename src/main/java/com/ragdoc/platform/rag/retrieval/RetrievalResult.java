@@ -3,7 +3,9 @@ package com.ragdoc.platform.rag.retrieval;
 import com.ragdoc.platform.rag.vector.ChunkSearchResult;
 
 /**
- * Hybrid search → rerank → parent expansion 이후 최종 retrieval 결과.
+ * Retrieval 파이프라인 최종 결과 DTO.
+ * <p>
+ * 하이브리드 검색 → 리랭킹 → parent 확장 이후 LLM 프롬프트 구성에 사용된다.
  */
 public record RetrievalResult(
         Long chunkId,

@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 회원가입·로그인·현재 사용자 조회 비즈니스 로직.
+ * 비밀번호는 BCrypt로 해싱하고, 성공 시 JWT를 함께 반환한다.
+ */
 @Service
 public class AuthService {
 
@@ -35,6 +39,7 @@ public class AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /** 이메일 중복 검사 후 사용자 생성 및 JWT 발급. */
     @Transactional
     public AuthResponse signup(SignupRequest request) {
         if (userRepository.existsByEmail(request.email())) {
@@ -52,6 +57,10 @@ public class AuthService {
         return AuthResponse.of(token, UserResponse.from(saved));
     }
 
+    /**
+     * 이메일·비밀번호를 검증한다.
+     * 보안상 존재하지 않는 이메일과 잘못된 비밀번호 모두 동일한 401 메시지를 반환한다.
+     */
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new BadCredentialsException(MessageKeys.AUTH_INVALID_CREDENTIALS));

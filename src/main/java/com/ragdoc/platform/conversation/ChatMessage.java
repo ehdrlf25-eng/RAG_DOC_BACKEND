@@ -11,6 +11,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/** 대화 내 개별 메시지(사용자 질문 또는 LLM 답변). */
 @Entity
 @Table(name = "chat_messages")
 public class ChatMessage {
@@ -22,6 +23,7 @@ public class ChatMessage {
     @Column(name = "conversation_id", nullable = false)
     private Long conversationId;
 
+    /** USER(질문) 또는 ASSISTANT(LLM 답변) */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MessageRole role;

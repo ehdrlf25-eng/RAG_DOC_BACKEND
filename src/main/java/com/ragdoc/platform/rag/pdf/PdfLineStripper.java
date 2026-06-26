@@ -7,7 +7,10 @@ import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.pdfbox.text.TextPosition;
 
 /**
- * PDFBox stripper that preserves reading order and captures per-line font metadata.
+ * PDFBox 커스텀 stripper.
+ * <p>
+ * 읽기 순서를 보존하면서 라인 단위로 텍스트와 폰트 메타데이터(크기, 볼드)를 추출한다.
+ * {@link com.ragdoc.platform.rag.section.HeadingDetector}의 헤딩 감지 입력으로 사용된다.
  */
 public class PdfLineStripper extends PDFTextStripper {
 
@@ -39,7 +42,7 @@ public class PdfLineStripper extends PDFTextStripper {
     @Override
     protected void writeParagraphEnd() throws IOException {
         flushCurrentLine();
-        lines.add(PdfLine.emptyLine());
+        lines.add(PdfLine.emptyLine()); // 문단 경계를 빈 라인으로 표시
         super.writeParagraphEnd();
     }
 

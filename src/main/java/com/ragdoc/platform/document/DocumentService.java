@@ -25,6 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * PDF 문서 업로드·조회·삭제 및 RAG 수집(청킹·임베딩)을 담당한다.
+ * 모든 조회·변경은 {@code userId} 소유권 검증을 거친다.
+ */
 @Service
 public class DocumentService {
 
@@ -59,6 +63,7 @@ public class DocumentService {
         this.ragProperties = ragProperties;
     }
 
+    /** 현재 사용자가 업로드한 문서를 최신순으로 반환한다. */
     @Transactional(readOnly = true)
     public List<DocumentResponse> listDocuments(Long userId) {
         return documentRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
@@ -66,11 +71,16 @@ public class DocumentService {
                 .toList();
     }
 
+    /** 문서 상세 조회. 타 사용자 문서는 403을 반환한다. */
     @Transactional(readOnly = true)
     public DocumentResponse getDocument(Long userId, Long documentId) {
         return DocumentResponse.from(getOwnedDocument(userId, documentId));
     }
 
+    /**
+     * PDF를 저장하고 수집 파이프라인을 실행한다.
+     * 수집 실패 시 상태를 FAILED로 기록한 뒤 400을 반환하며, finally에서 항상 DB에 저장한다.
+     */
     @Transactional
     public DocumentResponse uploadDocument(Long userId, MultipartFile file) {
         validatePdf(file);
@@ -121,6 +131,7 @@ public class DocumentService {
         return DocumentResponse.from(document);
     }
 
+    /** DB 청크·섹션·메타데이터와 디스크 파일을 함께 삭제한다. */
     @Transactional
     public void deleteDocument(Long userId, Long documentId) {
         Document document = getOwnedDocument(userId, documentId);
@@ -194,6 +205,7 @@ public class DocumentService {
         );
     }
 
+    /** 존재하지 않으면 404, 소유자가 다르면 403. RAG 검색 범위 격리의 기준점. */
     private Document getOwnedDocument(Long userId, Long documentId) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new ResponseStatusException(
@@ -219,6 +231,7 @@ public class DocumentService {
         }
     }
 
+    /** 사용자별 하위 디렉터리에 UUID 파일명으로 저장해 경로 충돌을 방지한다. */
     private Path storeFile(Long userId, MultipartFile file) {
         try {
             Path directory = Path.of(ragProperties.storage().path(), String.valueOf(userId));

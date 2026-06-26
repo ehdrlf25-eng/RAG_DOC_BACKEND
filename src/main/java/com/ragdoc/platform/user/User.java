@@ -10,6 +10,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/** 플랫폼 사용자 계정. 비밀번호는 BCrypt 해시로 저장된다. */
 @Entity
 @Table(name = "users")
 public class User {
@@ -18,6 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 로그인 식별자. 회원가입 시 중복 검사 대상. */
     @Column(nullable = false, unique = true)
     private String email;
 

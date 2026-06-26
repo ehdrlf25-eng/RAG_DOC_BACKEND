@@ -21,6 +21,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * RAG 채팅 대화 API.
+ * 메시지 전송 시 백엔드에서 검색·LLM 호출이 동기적으로 수행된다.
+ */
 @Tag(name = "Conversations", description = "RAG 채팅 대화 API")
 @RestController
 @RequestMapping("/api/conversations")

@@ -10,6 +10,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/** 사용자별 RAG 채팅 대화 세션. */
 @Entity
 @Table(name = "conversations")
 public class Conversation {
@@ -18,6 +19,7 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** 대화 소유자. 다른 사용자의 conversationId 접근을 차단하는 기준. */
     @Column(name = "user_id", nullable = false)
     private Long userId;
 

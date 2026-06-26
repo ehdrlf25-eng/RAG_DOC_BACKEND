@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 인증된 사용자의 PDF 문서 CRUD API.
+ * JWT에서 추출한 {@code userId}를 서비스에 전달해 소유권을 강제한다.
+ */
 @Tag(name = "Documents", description = "PDF 문서 업로드 및 관리 API")
 @RestController
 @RequestMapping("/api/documents")

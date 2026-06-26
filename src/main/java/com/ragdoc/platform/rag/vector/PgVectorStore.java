@@ -9,6 +9,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * PostgreSQL pgvector 기반 벡터 저장소.
+ * <p>
+ * Child chunk 임베딩을 저장하고 HNSW 인덱스를 활용한 코사인 거리 검색을 수행한다.
+ * 운영 환경({@code !test} 프로필)에서 사용된다.
+ */
 @Component
 @Profile("!test")
 public class PgVectorStore implements VectorStore {
@@ -32,6 +38,8 @@ public class PgVectorStore implements VectorStore {
 
     /**
      * Child chunk만 검색하고 Parent section 메타데이터를 함께 반환한다.
+     * <p>
+     * pgvector {@code <=>} 연산자(코사인 거리)를 사용하며, score = 1 - distance로 변환한다.
      */
     @Override
     public List<ChunkSearchResult> searchSimilar(

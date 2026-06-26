@@ -17,10 +17,15 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+/**
+ * Spring Cache 설정.
+ * 운영/로컬은 Redis, 테스트는 인메모리 캐시를 사용한다.
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig {
 
+    /** 사용자 캐시(user) — UserResponse를 JSON으로 직렬화하고 TTL을 적용한다. */
     @Bean
     @Profile("!test")
     RedisCacheManager redisCacheManager(

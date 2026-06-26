@@ -9,6 +9,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
+/**
+ * PostgreSQL Full-Text Search 기반 키워드 검색 저장소.
+ * <p>
+ * FTS 결과가 없으면 ILIKE 패턴 매칭으로 폴백한다. 운영 환경({@code !test} 프로필)에서 사용된다.
+ */
 @Component
 @Profile("!test")
 public class PgKeywordSearchStore implements KeywordSearchStore {
@@ -35,6 +40,7 @@ public class PgKeywordSearchStore implements KeywordSearchStore {
             return ftsResults;
         }
 
+        // FTS가 토큰화 불가 쿼리 등으로 결과 없을 때 부분 문자열 매칭으로 폴백
         List<ChunkSearchResult> likeResults = searchLikeFallback(userId, query, limit);
         log.info(
                 "Keyword LIKE fallback completed userId={} limit={} resultCount={}",

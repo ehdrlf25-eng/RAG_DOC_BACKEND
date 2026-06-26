@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * 전역 예외 처리기.
+ * 모든 API 에러는 {@code { "message": "..." }} 형식으로 반환하며, Accept-Language에 따라 i18n된다.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -35,6 +39,7 @@ public class GlobalExceptionHandler {
             return messageResolver.resolve(MessageKeys.COMMON_INVALID_INPUT);
         }
 
+        // Jakarta Validation 메시지 키 형식: "{validation.email.required}" → 키만 추출해 번역
         if (rawMessage.startsWith("{") && rawMessage.endsWith("}")) {
             return messageResolver.resolve(rawMessage.substring(1, rawMessage.length() - 1));
         }

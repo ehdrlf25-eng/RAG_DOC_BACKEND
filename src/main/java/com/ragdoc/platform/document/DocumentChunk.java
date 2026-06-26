@@ -9,6 +9,10 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * 문서의 자식(검색) 청크.
+ * Parent-Child RAG에서 벡터 검색 대상이 되는 최소 단위이다.
+ */
 @Entity
 @Table(name = "document_chunks")
 public class DocumentChunk {

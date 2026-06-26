@@ -4,6 +4,7 @@ import com.ragdoc.platform.document.Document;
 import com.ragdoc.platform.document.DocumentStatus;
 import java.time.Instant;
 
+/** 문서 목록·상세 API 응답 DTO. */
 public record DocumentResponse(
         Long id,
         String originalFilename,

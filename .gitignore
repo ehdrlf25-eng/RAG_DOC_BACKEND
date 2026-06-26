@@ -4,6 +4,7 @@ build/
 
 # Local secrets
 src/main/resources/application-local.yml
+deploy/.env
 
 # Uploaded documents (runtime)
 storage/

@@ -10,6 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+/**
+ * OpenAI API 기반 임베딩 Provider.
+ * <p>
+ * {@code app.rag.embedding.provider=openai} 설정 시 활성화된다.
+ */
 @Component
 @ConditionalOnProperty(prefix = "app.rag.embedding", name = "provider", havingValue = "openai")
 public class OpenAiEmbeddingProvider implements EmbeddingProvider {
