@@ -14,6 +14,7 @@ import org.springframework.web.client.RestClient;
  * OpenAI API 기반 임베딩 Provider.
  * <p>
  * {@code app.rag.embedding.provider=openai} 설정 시 활성화된다.
+ * {@code text-embedding-3-small} 등은 {@code dimensions} 파라미터로 DB vector 차원과 맞출 수 있다.
  */
 @Component
 @ConditionalOnProperty(prefix = "app.rag.embedding", name = "provider", havingValue = "openai")
@@ -21,10 +22,13 @@ public class OpenAiEmbeddingProvider implements EmbeddingProvider {
 
     private final RestClient restClient;
     private final String model;
+    private final int expectedDimensions;
 
     public OpenAiEmbeddingProvider(RagProperties ragProperties) {
         RagProperties.OpenAi openAi = ragProperties.embedding().openai();
+        requireApiKey(openAi.apiKey());
         this.model = openAi.model();
+        this.expectedDimensions = ragProperties.embedding().dimensions();
         this.restClient = RestClient.builder()
                 .baseUrl(openAi.baseUrl())
                 .defaultHeader("Authorization", "Bearer " + openAi.apiKey())
@@ -41,7 +45,7 @@ public class OpenAiEmbeddingProvider implements EmbeddingProvider {
         EmbeddingResponse response = restClient.post()
                 .uri("/embeddings")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(new EmbeddingRequest(model, texts))
+                .body(new EmbeddingRequest(model, texts, expectedDimensions))
                 .retrieve()
                 .body(EmbeddingResponse.class);
 
@@ -51,9 +55,23 @@ public class OpenAiEmbeddingProvider implements EmbeddingProvider {
 
         List<float[]> vectors = new ArrayList<>(response.data().size());
         for (EmbeddingData item : response.data()) {
-            vectors.add(toFloatArray(item.embedding()));
+            float[] vector = toFloatArray(item.embedding());
+            validateDimensions(vector);
+            vectors.add(vector);
         }
         return vectors;
+    }
+
+    private void validateDimensions(float[] vector) {
+        if (vector.length != expectedDimensions) {
+            throw new IllegalStateException(
+                    "OpenAI embedding dimension mismatch. expected="
+                            + expectedDimensions
+                            + ", actual="
+                            + vector.length
+                            + ". Update app.rag.embedding.dimensions or OPENAI_EMBEDDING_MODEL."
+            );
+        }
     }
 
     private float[] toFloatArray(List<Double> values) {
@@ -64,7 +82,15 @@ public class OpenAiEmbeddingProvider implements EmbeddingProvider {
         return vector;
     }
 
-    private record EmbeddingRequest(String model, List<String> input) {
+    private static void requireApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException(
+                    "OPENAI_API_KEY is required when app.rag.embedding.provider=openai"
+            );
+        }
+    }
+
+    private record EmbeddingRequest(String model, List<String> input, int dimensions) {
     }
 
     private record EmbeddingResponse(List<EmbeddingData> data) {

@@ -22,6 +22,7 @@ public class OpenAiLlmProvider implements LlmProvider {
 
     public OpenAiLlmProvider(RagProperties ragProperties) {
         RagProperties.OpenAi openAi = ragProperties.llm().openai();
+        requireApiKey(openAi.apiKey());
         this.model = openAi.model();
         this.restClient = RestClient.builder()
                 .baseUrl(openAi.baseUrl())
@@ -49,6 +50,14 @@ public class OpenAiLlmProvider implements LlmProvider {
         }
 
         return response.choices().getFirst().message().content();
+    }
+
+    private static void requireApiKey(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException(
+                    "OPENAI_API_KEY is required when app.rag.llm.provider=openai"
+            );
+        }
     }
 
     private record ChatRequest(String model, List<ChatMessage> messages) {

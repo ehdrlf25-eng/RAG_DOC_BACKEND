@@ -20,9 +20,12 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      # /tmp/kraft-combined-logs + named volume fails on Docker Desktop (Windows):
+      # appuser cannot write bootstrap.checkpoint.tmp (AccessDeniedException).
+      # Use /var/lib/kafka/data — same layout as auth-kafka on this host.
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
     volumes:
-      - kafka_data:/tmp/kraft-combined-logs
+      - kafka_data:/var/lib/kafka/data
     networks:
       - ragdoc-net
     healthcheck:

@@ -55,11 +55,12 @@ app:
       rerank-candidate-limit: 20
       parent-expansion-limit: 5
       reranker-provider: llm
+    reembed-on-startup: ${RAG_REEMBED_ON_STARTUP:false}
     chunking:
       child-max-tokens: 256
     embedding:
-      provider: ${RAG_EMBEDDING_PROVIDER:ollama}
-      dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+      provider: ${RAG_EMBEDDING_PROVIDER:openai}
+      dimensions: ${RAG_EMBEDDING_DIMENSIONS:1536}
       openai:
         api-key: ${OPENAI_API_KEY:}
         base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
@@ -68,7 +69,7 @@ app:
         base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
         model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
     llm:
-      provider: ${RAG_LLM_PROVIDER:ollama}
+      provider: ${RAG_LLM_PROVIDER:openai}
       openai:
         api-key: ${OPENAI_API_KEY:}
         base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}

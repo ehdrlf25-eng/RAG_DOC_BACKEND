@@ -22,14 +22,23 @@ app:
   rag:
     storage:
       path: ${RAG_STORAGE_PATH:/app/storage/documents}
+    reembed-on-startup: ${RAG_REEMBED_ON_STARTUP:false}
     embedding:
-      provider: ${RAG_EMBEDDING_PROVIDER:ollama}
-      dimensions: ${RAG_EMBEDDING_DIMENSIONS:768}
+      provider: ${RAG_EMBEDDING_PROVIDER:openai}
+      dimensions: ${RAG_EMBEDDING_DIMENSIONS:1536}
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+        model: ${OPENAI_EMBEDDING_MODEL:text-embedding-3-small}
       ollama:
         base-url: ${OLLAMA_BASE_URL:http://host.docker.internal:11434}
         model: ${OLLAMA_EMBEDDING_MODEL:nomic-embed-text}
     llm:
-      provider: ${RAG_LLM_PROVIDER:ollama}
+      provider: ${RAG_LLM_PROVIDER:openai}
+      openai:
+        api-key: ${OPENAI_API_KEY:}
+        base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
+        model: ${OPENAI_CHAT_MODEL:gpt-4o-mini}
       ollama:
         base-url: ${OLLAMA_BASE_URL:http://host.docker.internal:11434}
         model: ${OLLAMA_CHAT_MODEL:llama3.2}
