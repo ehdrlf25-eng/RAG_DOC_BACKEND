@@ -17,7 +17,15 @@
 3. Security Group
    - EC2: 22(내 IP), 80(0.0.0.0/0)
    - RDS: 5432 ← EC2 SG만
-4. EC2에 Docker, Docker Compose, AWS CLI 설치
+4. EC2에 Docker, **Docker Compose plugin**, AWS CLI 설치
+
+```bash
+sudo dnf install -y docker docker-compose-plugin git
+sudo systemctl enable --now docker
+sudo usermod -aG docker ec2-user
+# 로그아웃 후 재접속
+docker compose version
+```
 
 ## EC2 초기 설정
 

@@ -13,6 +13,17 @@ if [[ ! -f .env ]]; then
   exit 1
 fi
 
+if docker compose version &>/dev/null; then
+  DOCKER_COMPOSE=(docker compose)
+elif command -v docker-compose &>/dev/null; then
+  DOCKER_COMPOSE=(docker-compose)
+else
+  echo "Docker Compose not found. Install: sudo dnf install -y docker-compose-plugin" >&2
+  exit 1
+fi
+
+echo "Using: ${DOCKER_COMPOSE[*]}"
+
 echo "Logging in to ECR (${ECR_REGISTRY})..."
 aws ecr get-login-password --region "${AWS_REGION}" \
   | docker login --username AWS --password-stdin "${ECR_REGISTRY}"
@@ -24,10 +35,10 @@ COMPOSE_FILES=(
 )
 
 echo "Pulling images..."
-docker compose "${COMPOSE_FILES[@]}" pull
+"${DOCKER_COMPOSE[@]}" "${COMPOSE_FILES[@]}" pull
 
 echo "Starting services..."
-docker compose "${COMPOSE_FILES[@]}" up -d
+"${DOCKER_COMPOSE[@]}" "${COMPOSE_FILES[@]}" up -d
 
 docker image prune -f
 
