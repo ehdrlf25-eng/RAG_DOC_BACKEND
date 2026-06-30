@@ -34,8 +34,8 @@ services:
       test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 5s
-      retries: 5
-      start_period: 90s
+      retries: 10
+      start_period: 180s
 
   frontend:
     image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE is required}
@@ -45,7 +45,7 @@ services:
       - "80:80"
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     networks:
       - ragdoc-net
 

@@ -44,6 +44,9 @@ echo "Pulling images..."
 echo "Starting services..."
 "${DOCKER_COMPOSE[@]}" "${COMPOSE_FILES[@]}" up -d
 
+echo "Container status:"
+docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
 docker image prune -f
 
 echo "Deploy complete."
