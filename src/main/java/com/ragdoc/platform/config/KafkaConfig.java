@@ -39,8 +39,9 @@ public class KafkaConfig {
             ObjectMapper objectMapper
     ) {
         Map<String, Object> config = new HashMap<>(springKafkaProperties.buildProducerProperties(null));
-        config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        config.remove(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
+        config.remove(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
+        config.keySet().removeIf(key -> key.toString().startsWith("spring.json"));
         DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(config);
         factory.setValueSerializer(new JsonSerializer<>(objectMapper));
         return factory;
@@ -57,8 +58,9 @@ public class KafkaConfig {
             ObjectMapper objectMapper
     ) {
         Map<String, Object> config = new HashMap<>(springKafkaProperties.buildConsumerProperties(null));
-        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        config.remove(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG);
+        config.remove(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG);
+        config.keySet().removeIf(key -> key.toString().startsWith("spring.json"));
         JsonDeserializer<DocumentUploadedEvent> deserializer = new JsonDeserializer<>(DocumentUploadedEvent.class, objectMapper);
         deserializer.addTrustedPackages("com.ragdoc.platform.kafka.event");
         deserializer.setUseTypeHeaders(false);
