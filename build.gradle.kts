@@ -31,6 +31,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.kafka:spring-kafka")
+    implementation(platform("software.amazon.awssdk:bom:2.29.45"))
+    implementation("software.amazon.awssdk:s3")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.8")
     implementation("io.swagger.core.v3:swagger-annotations-jakarta:2.2.30")
     implementation("org.apache.pdfbox:pdfbox:3.0.5")

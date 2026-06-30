@@ -74,7 +74,7 @@ class SemanticChunkingServiceTest {
 
     private RagProperties testProperties(int maxTokens) {
         return new RagProperties(
-                new RagProperties.Storage("./storage"),
+                new RagProperties.Storage("local", "./storage", "", "ap-northeast-2"),
                 new RagProperties.Retrieval(5, 10, 0.8, 40, 0.3, 60, 20, 5, "passthrough"),
                 new RagProperties.Chunking(maxTokens),
                 new RagProperties.Embedding("mock", 768, null, null),

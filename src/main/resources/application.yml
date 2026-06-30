@@ -70,7 +70,10 @@ app:
     user-ttl: 30m
   rag:
     storage:
+      provider: local
       path: ${RAG_STORAGE_PATH:./storage/documents}
+      bucket: ${AWS_S3_BUCKET:}
+      region: ${AWS_REGION:ap-northeast-2}
     retrieval:
       top-k: 5
       max-history-messages: 10

@@ -1,15 +1,10 @@
 package com.ragdoc.platform.document;
 
 import com.ragdoc.platform.common.MessageKeys;
-import com.ragdoc.platform.config.RagProperties;
 import com.ragdoc.platform.document.dto.DocumentResponse;
+import com.ragdoc.platform.document.storage.DocumentStorage;
 import com.ragdoc.platform.kafka.outbox.OutboxService;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
-import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -30,20 +25,20 @@ public class DocumentService {
     private final DocumentRepository documentRepository;
     private final DocumentChunkRepository documentChunkRepository;
     private final ParentSectionRepository parentSectionRepository;
-    private final RagProperties ragProperties;
+    private final DocumentStorage documentStorage;
     private final OutboxService outboxService;
 
     public DocumentService(
             DocumentRepository documentRepository,
             DocumentChunkRepository documentChunkRepository,
             ParentSectionRepository parentSectionRepository,
-            RagProperties ragProperties,
+            DocumentStorage documentStorage,
             OutboxService outboxService
     ) {
         this.documentRepository = documentRepository;
         this.documentChunkRepository = documentChunkRepository;
         this.parentSectionRepository = parentSectionRepository;
-        this.ragProperties = ragProperties;
+        this.documentStorage = documentStorage;
         this.outboxService = outboxService;
     }
 
@@ -72,12 +67,12 @@ public class DocumentService {
 
         log.info("Document upload started userId={} filename={} sizeBytes={}", userId, filename, file.getSize());
 
-        Path storagePath = storeFile(userId, file);
+        String storageKey = documentStorage.store(userId, file);
 
         Document document = new Document();
         document.setUserId(userId);
         document.setOriginalFilename(filename);
-        document.setStoragePath(storagePath.toString());
+        document.setStoragePath(storageKey);
         document.setStatus(DocumentStatus.PROCESSING);
         document.setChunkCount(0);
         document = documentRepository.save(document);
@@ -85,24 +80,25 @@ public class DocumentService {
         outboxService.enqueueDocumentUploaded(document);
 
         log.info(
-                "Document upload accepted userId={} documentId={} filename={} status={}",
+                "Document upload accepted userId={} documentId={} filename={} status={} storageKey={}",
                 userId,
                 document.getId(),
                 filename,
-                document.getStatus()
+                document.getStatus(),
+                storageKey
         );
 
         return DocumentResponse.from(document);
     }
 
-    /** DB 청크·섹션·메타데이터와 디스크 파일을 함께 삭제한다. */
+    /** DB 청크·섹션·메타데이터와 저장소 파일을 함께 삭제한다. */
     @Transactional
     public void deleteDocument(Long userId, Long documentId) {
         Document document = getOwnedDocument(userId, documentId);
         documentChunkRepository.deleteByDocumentId(documentId);
         parentSectionRepository.deleteByDocumentId(documentId);
         documentRepository.delete(document);
-        deleteStoredFile(document.getStoragePath());
+        documentStorage.delete(document.getStoragePath());
         log.info("Document deleted userId={} documentId={} filename={}", userId, documentId, document.getOriginalFilename());
     }
 
@@ -129,34 +125,6 @@ public class DocumentService {
         String filename = file.getOriginalFilename();
         if (filename == null || !filename.toLowerCase().endsWith(".pdf")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, MessageKeys.DOCUMENT_INVALID_TYPE);
-        }
-    }
-
-    /** 사용자별 하위 디렉터리에 UUID 파일명으로 저장해 경로 충돌을 방지한다. */
-    private Path storeFile(Long userId, MultipartFile file) {
-        try {
-            Path directory = Path.of(ragProperties.storage().path(), String.valueOf(userId));
-            Files.createDirectories(directory);
-            Path target = directory.resolve(UUID.randomUUID() + ".pdf");
-            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
-            return target;
-        } catch (IOException ex) {
-            throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR,
-                    MessageKeys.DOCUMENT_STORAGE_FAILED,
-                    ex
-            );
-        }
-    }
-
-    private void deleteStoredFile(String storagePath) {
-        if (storagePath == null) {
-            return;
-        }
-        try {
-            Files.deleteIfExists(Path.of(storagePath));
-        } catch (IOException ignored) {
-            // Best effort cleanup.
         }
     }
 

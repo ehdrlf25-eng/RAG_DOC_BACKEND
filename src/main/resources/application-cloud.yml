@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:ragdoc}
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME:ragdoc}?sslmode=require
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
   data:
@@ -35,10 +35,10 @@ app:
     user-ttl: ${USER_CACHE_TTL:30m}
   rag:
     storage:
-      provider: local
-      path: ${RAG_STORAGE_PATH:/app/storage/documents}
-      bucket: ${AWS_S3_BUCKET:}
+      provider: s3
+      bucket: ${AWS_S3_BUCKET}
       region: ${AWS_REGION:ap-northeast-2}
+      path: ${RAG_STORAGE_PATH:/tmp}
     reembed-on-startup: ${RAG_REEMBED_ON_STARTUP:false}
     embedding:
       provider: ${RAG_EMBEDDING_PROVIDER:openai}

@@ -6,8 +6,8 @@ build/
 src/main/resources/application-local.yml
 deploy/.env
 
-# Uploaded documents (runtime)
-storage/
+# Uploaded documents (runtime, repository root only)
+/storage/
 
 # IDE
 .idea/

@@ -7,6 +7,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.ragdoc.platform.document.storage.DocumentStorage;
 import com.ragdoc.platform.kafka.outbox.OutboxService;
 import com.ragdoc.platform.rag.PdfTextExtractor;
 import com.ragdoc.platform.rag.ingestion.ParentSection;
@@ -54,6 +55,9 @@ class DocumentIngestionServiceTest {
     @Mock
     private OutboxService outboxService;
 
+    @Mock
+    private DocumentStorage documentStorage;
+
     @InjectMocks
     private DocumentIngestionService documentIngestionService;
 
@@ -66,6 +70,7 @@ class DocumentIngestionServiceTest {
         ReflectionTestUtils.setField(document, "id", 10L);
         when(documentRepository.findById(10L)).thenReturn(Optional.of(document));
         when(documentChunkRepository.findByDocumentIdOrderByChunkIndexAsc(10L)).thenReturn(List.of());
+        when(documentStorage.exists(document.getStoragePath())).thenReturn(false);
 
         documentIngestionService.ingestUploadedDocument(10L);
 
@@ -94,6 +99,8 @@ class DocumentIngestionServiceTest {
         ReflectionTestUtils.setField(document, "id", 12L);
         when(documentRepository.findById(12L)).thenReturn(Optional.of(document));
         when(documentChunkRepository.findByDocumentIdOrderByChunkIndexAsc(12L)).thenReturn(List.of());
+        when(documentStorage.exists(pdf.toString())).thenReturn(true);
+        when(documentStorage.open(pdf.toString())).thenReturn(Files.newInputStream(pdf));
         when(pdfTextExtractor.extract(any())).thenReturn(
                 new PdfTextExtractor.PdfExtractionResult(List.of(PdfLine.of("line", 12f, false)), 1)
         );

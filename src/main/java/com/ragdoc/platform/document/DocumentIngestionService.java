@@ -1,5 +1,6 @@
 package com.ragdoc.platform.document;
 
+import com.ragdoc.platform.document.storage.DocumentStorage;
 import com.ragdoc.platform.kafka.outbox.OutboxService;
 import com.ragdoc.platform.rag.PdfTextExtractor;
 import com.ragdoc.platform.rag.ingestion.ParentSection;
@@ -9,11 +10,8 @@ import com.ragdoc.platform.rag.section.SectionChunkingService;
 import com.ragdoc.platform.rag.vector.VectorStore;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,6 +35,7 @@ public class DocumentIngestionService {
     private final EmbeddingProvider embeddingProvider;
     private final VectorStore vectorStore;
     private final OutboxService outboxService;
+    private final DocumentStorage documentStorage;
 
     public DocumentIngestionService(
             DocumentRepository documentRepository,
@@ -46,7 +45,8 @@ public class DocumentIngestionService {
             SectionChunkingService sectionChunkingService,
             EmbeddingProvider embeddingProvider,
             VectorStore vectorStore,
-            OutboxService outboxService
+            OutboxService outboxService,
+            DocumentStorage documentStorage
     ) {
         this.documentRepository = documentRepository;
         this.documentChunkRepository = documentChunkRepository;
@@ -56,6 +56,7 @@ public class DocumentIngestionService {
         this.embeddingProvider = embeddingProvider;
         this.vectorStore = vectorStore;
         this.outboxService = outboxService;
+        this.documentStorage = documentStorage;
     }
 
     /**
@@ -135,12 +136,12 @@ public class DocumentIngestionService {
     }
 
     private void ingestFromStorage(Document document) throws IOException {
-        Path storagePath = Path.of(document.getStoragePath());
-        if (!Files.exists(storagePath)) {
-            throw new IllegalStateException("Stored PDF file not found: " + storagePath);
+        String storageKey = document.getStoragePath();
+        if (!documentStorage.exists(storageKey)) {
+            throw new IllegalStateException("Stored PDF file not found: " + storageKey);
         }
 
-        try (InputStream inputStream = Files.newInputStream(storagePath)) {
+        try (InputStream inputStream = documentStorage.open(storageKey)) {
             PdfTextExtractor.PdfExtractionResult extraction = pdfTextExtractor.extract(inputStream);
             document.setPageCount(extraction.pageCount());
 

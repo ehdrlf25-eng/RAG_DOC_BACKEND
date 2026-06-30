@@ -15,8 +15,13 @@ public record RagProperties(
         Llm llm
 ) {
 
-    /** PDF 원본 파일 로컬 저장 경로 */
-    public record Storage(String path) {
+    /** PDF 원본 저장 설정 (local: path, cloud: S3 bucket/region) */
+    public record Storage(
+            String provider,
+            String path,
+            String bucket,
+            String region
+    ) {
     }
 
     /** 벡터·하이브리드 검색 및 대화 이력 제한 */

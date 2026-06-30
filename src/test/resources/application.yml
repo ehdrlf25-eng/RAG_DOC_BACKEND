@@ -30,7 +30,10 @@ app:
     user-ttl: 5m
   rag:
     storage:
+      provider: local
       path: ./build/test-storage
+      bucket: ""
+      region: ap-northeast-2
     retrieval:
       top-k: 3
       max-history-messages: 5
