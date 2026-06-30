@@ -17,15 +17,27 @@
 3. Security Group
    - EC2: 22(내 IP), 80(0.0.0.0/0)
    - RDS: 5432 ← EC2 SG만
-4. EC2에 Docker, **Docker Compose plugin**, AWS CLI 설치
+4. EC2에 Docker, Docker Compose, AWS CLI 설치
+
+Amazon Linux에는 `docker-compose-plugin` 패키지가 없을 수 있습니다. 아래 순서로 설치하세요.
 
 ```bash
-sudo dnf install -y docker docker-compose-plugin git
+sudo dnf install -y docker git
 sudo systemctl enable --now docker
 sudo usermod -aG docker ec2-user
 # 로그아웃 후 재접속
+
+# Compose V2 plugin (dnf 실패 시 수동 설치)
+ARCH=$(uname -m)
+sudo mkdir -p /usr/local/lib/docker/cli-plugins
+sudo curl -fsSL "https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-linux-${ARCH}" \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
 docker compose version
 ```
+
+`docker compose version`이 나오면 준비 완료입니다.
 
 ## EC2 초기 설정
 

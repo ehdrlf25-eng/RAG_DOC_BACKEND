@@ -18,7 +18,11 @@ if docker compose version &>/dev/null; then
 elif command -v docker-compose &>/dev/null; then
   DOCKER_COMPOSE=(docker-compose)
 else
-  echo "Docker Compose not found. Install: sudo dnf install -y docker-compose-plugin" >&2
+  echo "Docker Compose not found. Install plugin:" >&2
+  echo "  sudo mkdir -p /usr/local/lib/docker/cli-plugins" >&2
+  echo "  sudo curl -fsSL https://github.com/docker/compose/releases/download/v2.27.1/docker-compose-linux-\$(uname -m) \\" >&2
+  echo "    -o /usr/local/lib/docker/cli-plugins/docker-compose" >&2
+  echo "  sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose" >&2
   exit 1
 fi
 
