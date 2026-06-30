@@ -3,20 +3,13 @@ package com.ragdoc.platform.document;
 import com.ragdoc.platform.common.MessageKeys;
 import com.ragdoc.platform.config.RagProperties;
 import com.ragdoc.platform.document.dto.DocumentResponse;
-import com.ragdoc.platform.rag.PdfTextExtractor;
-import com.ragdoc.platform.rag.provider.EmbeddingProvider;
-import com.ragdoc.platform.rag.ingestion.ParentSection;
-import com.ragdoc.platform.rag.section.SectionChunkingService;
-import com.ragdoc.platform.rag.parentchild.ChildChunk;
-import com.ragdoc.platform.rag.vector.VectorStore;
+import com.ragdoc.platform.kafka.outbox.OutboxService;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,8 +19,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * PDF 문서 업로드·조회·삭제 및 RAG 수집(청킹·임베딩)을 담당한다.
- * 모든 조회·변경은 {@code userId} 소유권 검증을 거친다.
+ * PDF 문서 업로드·조회·삭제를 담당한다.
+ * 업로드 시 파일 저장과 PROCESSING 등록 후 Kafka Outbox로 ingest를 비동기 위임한다.
  */
 @Service
 public class DocumentService {
@@ -36,31 +29,22 @@ public class DocumentService {
 
     private final DocumentRepository documentRepository;
     private final DocumentChunkRepository documentChunkRepository;
-    private final PdfTextExtractor pdfTextExtractor;
-    private final SectionChunkingService sectionChunkingService;
     private final ParentSectionRepository parentSectionRepository;
-    private final EmbeddingProvider embeddingProvider;
-    private final VectorStore vectorStore;
     private final RagProperties ragProperties;
+    private final OutboxService outboxService;
 
     public DocumentService(
             DocumentRepository documentRepository,
             DocumentChunkRepository documentChunkRepository,
-            PdfTextExtractor pdfTextExtractor,
-            SectionChunkingService sectionChunkingService,
             ParentSectionRepository parentSectionRepository,
-            EmbeddingProvider embeddingProvider,
-            VectorStore vectorStore,
-            RagProperties ragProperties
+            RagProperties ragProperties,
+            OutboxService outboxService
     ) {
         this.documentRepository = documentRepository;
         this.documentChunkRepository = documentChunkRepository;
-        this.pdfTextExtractor = pdfTextExtractor;
-        this.sectionChunkingService = sectionChunkingService;
         this.parentSectionRepository = parentSectionRepository;
-        this.embeddingProvider = embeddingProvider;
-        this.vectorStore = vectorStore;
         this.ragProperties = ragProperties;
+        this.outboxService = outboxService;
     }
 
     /** 현재 사용자가 업로드한 문서를 최신순으로 반환한다. */
@@ -78,8 +62,8 @@ public class DocumentService {
     }
 
     /**
-     * PDF를 저장하고 수집 파이프라인을 실행한다.
-     * 수집 실패 시 상태를 FAILED로 기록한 뒤 400을 반환하며, finally에서 항상 DB에 저장한다.
+     * PDF를 저장하고 PROCESSING 상태로 등록한 뒤 Outbox에 DocumentUploaded를 적재한다.
+     * ingest는 Kafka Consumer가 비동기로 수행한다.
      */
     @Transactional
     public DocumentResponse uploadDocument(Long userId, MultipartFile file) {
@@ -96,37 +80,17 @@ public class DocumentService {
         document.setStoragePath(storagePath.toString());
         document.setStatus(DocumentStatus.PROCESSING);
         document.setChunkCount(0);
+        document = documentRepository.save(document);
 
-        try {
-            ingestDocument(document, file);
-            document.setStatus(DocumentStatus.READY);
-            log.info(
-                    "Document upload completed userId={} documentId={} filename={} status={} pageCount={} chunkCount={}",
-                    userId,
-                    document.getId(),
-                    filename,
-                    document.getStatus(),
-                    document.getPageCount(),
-                    document.getChunkCount()
-            );
-        } catch (Exception ex) {
-            document.setStatus(DocumentStatus.FAILED);
-            log.warn(
-                    "Document upload failed userId={} filename={} status={} reason={}",
-                    userId,
-                    filename,
-                    document.getStatus(),
-                    ex.getMessage(),
-                    ex
-            );
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    MessageKeys.DOCUMENT_PROCESSING_FAILED,
-                    ex
-            );
-        } finally {
-            documentRepository.save(document);
-        }
+        outboxService.enqueueDocumentUploaded(document);
+
+        log.info(
+                "Document upload accepted userId={} documentId={} filename={} status={}",
+                userId,
+                document.getId(),
+                filename,
+                document.getStatus()
+        );
 
         return DocumentResponse.from(document);
     }
@@ -140,69 +104,6 @@ public class DocumentService {
         documentRepository.delete(document);
         deleteStoredFile(document.getStoragePath());
         log.info("Document deleted userId={} documentId={} filename={}", userId, documentId, document.getOriginalFilename());
-    }
-
-    /**
-     * PDF 수집 파이프라인: 라인 추출 → 섹션 청킹 → Parent-Child 분할 → Child 임베딩 → 저장.
-     */
-    private void ingestDocument(Document document, MultipartFile file) throws IOException {
-        PdfTextExtractor.PdfExtractionResult extraction = pdfTextExtractor.extract(file.getInputStream());
-        document.setPageCount(extraction.pageCount());
-
-        List<ParentSection> parentSections = sectionChunkingService.buildParentSections(extraction.lines());
-        if (parentSections.isEmpty()) {
-            throw new IllegalStateException("No text extracted from PDF.");
-        }
-
-        log.info(
-                "Document ingestion prepared documentFilename={} pageCount={} lineCount={} parentCount={} childCount={} sectionTitles={}",
-                document.getOriginalFilename(),
-                extraction.pageCount(),
-                extraction.lines().size(),
-                parentSections.size(),
-                parentSections.stream().mapToInt(section -> section.children().size()).sum(),
-                parentSections.stream().map(ParentSection::sectionTitle).collect(Collectors.toList())
-        );
-
-        document = documentRepository.save(document);
-        Long documentId = document.getId();
-
-        List<DocumentChunk> savedChildren = new ArrayList<>();
-        List<String> embeddingTexts = new ArrayList<>();
-
-        for (ParentSection parentSection : parentSections) {
-            com.ragdoc.platform.document.ParentSection parent = new com.ragdoc.platform.document.ParentSection();
-            parent.setDocumentId(documentId);
-            parent.setSectionIndex(parentSection.sectionIndex());
-            parent.setTitle(parentSection.sectionTitle());
-            parent.setFullContent(parentSection.fullContent());
-            parent = parentSectionRepository.save(parent);
-
-            for (ChildChunk childChunk : parentSection.children()) {
-                DocumentChunk child = new DocumentChunk();
-                child.setDocumentId(documentId);
-                child.setParentSectionId(parent.getId());
-                child.setChunkIndex(childChunk.chunkIndex());
-                child.setSectionTitle(parentSection.sectionTitle());
-                child.setContent(childChunk.content());
-                savedChildren.add(documentChunkRepository.save(child));
-                embeddingTexts.add(childChunk.toEmbeddingText(parentSection.sectionTitle()));
-            }
-        }
-
-        List<float[]> embeddings = embeddingProvider.embedAll(embeddingTexts);
-        for (int i = 0; i < savedChildren.size(); i++) {
-            vectorStore.saveEmbedding(savedChildren.get(i).getId(), embeddings.get(i));
-        }
-
-        document.setChunkCount(savedChildren.size());
-        log.info(
-                "Document parent-child embeddings stored documentId={} parentCount={} childCount={} embeddingDimensions={}",
-                document.getId(),
-                parentSections.size(),
-                savedChildren.size(),
-                embeddings.isEmpty() ? 0 : embeddings.getFirst().length
-        );
     }
 
     /** 존재하지 않으면 404, 소유자가 다르면 403. RAG 검색 범위 격리의 기준점. */

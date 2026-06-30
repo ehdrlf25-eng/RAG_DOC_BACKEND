@@ -11,8 +11,22 @@ spring:
     type: redis
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:ragdoc-platform}
 
 app:
+  kafka:
+    topics:
+      document-uploaded: document.uploaded
+      document-processed: document.processed
+      document-processing-failed: document.processing-failed
+      document-uploaded-dlq: document.uploaded.dlq
+    consumer:
+      retry-interval-ms: 1000
+      max-attempts: 3
+    outbox:
+      publish-interval-ms: 1000
+      max-publish-retries: 5
   jwt:
     secret: ${JWT_SECRET:change-me-to-a-secure-secret-key-at-least-32-chars}
   cors:

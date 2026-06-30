@@ -1,0 +1,20 @@
+spring:
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    consumer:
+      group-id: ragdoc-platform-test
+      auto-offset-reset: earliest
+
+app:
+  kafka:
+    topics:
+      document-uploaded: document.uploaded
+      document-processed: document.processed
+      document-processing-failed: document.processing-failed
+      document-uploaded-dlq: document.uploaded.dlq
+    consumer:
+      retry-interval-ms: 100
+      max-attempts: 1
+    outbox:
+      publish-interval-ms: 200
+      max-publish-retries: 3

@@ -48,7 +48,7 @@ public class DocumentController {
         return documentService.getDocument(userId, documentId);
     }
 
-    @Operation(summary = "PDF 문서 업로드", description = "PDF를 업로드하고 텍스트 추출·청킹·임베딩을 수행합니다.")
+    @Operation(summary = "PDF 문서 업로드", description = "PDF를 저장하고 비동기 ingest(PROCESSING)를 시작합니다.")
     @PostMapping(consumes = "multipart/form-data")
     @ResponseStatus(HttpStatus.CREATED)
     public DocumentResponse uploadDocument(
