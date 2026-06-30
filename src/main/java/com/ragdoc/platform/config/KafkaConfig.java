@@ -42,9 +42,8 @@ public class KafkaConfig {
         config.remove(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG);
         config.remove(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG);
         config.keySet().removeIf(key -> key.toString().startsWith("spring.json"));
-        DefaultKafkaProducerFactory<String, Object> factory = new DefaultKafkaProducerFactory<>(config);
-        factory.setValueSerializer(new JsonSerializer<>(objectMapper));
-        return factory;
+        JsonSerializer<Object> valueSerializer = new JsonSerializer<>(objectMapper);
+        return new DefaultKafkaProducerFactory<>(config, new StringSerializer(), valueSerializer);
     }
 
     @Bean
